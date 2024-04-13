@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
 using UnityEngine;
 
@@ -8,10 +10,13 @@ namespace Oxide.Plugins
     [Description("Paste photo from Instant Camera to a PhotoFrame")]
     internal class Photog : RustPlugin
     {
+        private ConfigData configData;
+
         private Dictionary<ulong, NetworkableId> frames = new Dictionary<ulong, NetworkableId>();
 
         private void OnServerInitialized()
         {
+            LoadConfigVariables();
             AddCovalenceCommand("mf", "cmdMarkFrame");
         }
 
@@ -42,8 +47,15 @@ namespace Oxide.Plugins
                     Puts("Loading image to photo frame");
                     photoFrame.Load(info);
                     photoFrame.SendNetworkUpdateImmediate();
+                    if (configData.lockOnPaint)
+                    {
+                        photoFrame.SetFlag(BaseEntity.Flags.Locked, true);
+                    }
                 }
-                frames.Remove(player.userID);
+                if (!configData.leaveOpen)
+                {
+                    frames.Remove(player.userID);
+                }
             }
         }
 
@@ -52,13 +64,14 @@ namespace Oxide.Plugins
         {
             BasePlayer player = iplayer.Object as BasePlayer;
             PhotoFrame frame = FindEntity(player) as PhotoFrame;
-            bool keepOpen = false;
-            if (args.Length > 0 && args[0] == "y")
-            {
-                keepOpen = true;
-            }
             if (frame != null)
             {
+                if (frames.ContainsKey(player.userID))
+                {
+                    frames.Remove(player.userID);
+                    iplayer.Reply("Frame has been unmarked");
+                    return;
+                }
                 frames.Add(player.userID, frame.NetworkID);
                 iplayer.Reply("Frame has been marked");
             }
@@ -75,6 +88,30 @@ namespace Oxide.Plugins
         {
             public bool lockOnPaint;
             public bool leaveOpen;
+            public VersionNumber Version;
+        }
+
+        private void LoadConfigVariables()
+        {
+            configData = Config.ReadObject<ConfigData>();
+
+            configData.Version = Version;
+            SaveConfig(configData);
+        }
+
+        private void SaveConfig(ConfigData config)
+        {
+            Config.WriteObject(config, true);
+        }
+
+        protected override void LoadDefaultConfig()
+        {
+            Puts("Creating new config file.");
+            ConfigData config = new ConfigData
+            {
+                leaveOpen = false,
+                lockOnPaint = false
+            };
         }
     }
 }
