@@ -25,11 +25,12 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Photog", "RFC1920", "0.0.2")]
+    [Info("Photog", "RFC1920", "0.0.3")]
     [Description("Paste photo from Instant Camera to a PhotoFrame")]
     internal class Photog : RustPlugin
     {
         private ConfigData configData;
+        private const string permUse = "photog.use";
 
         private Dictionary<ulong, NetworkableId> frames = new Dictionary<ulong, NetworkableId>();
 
@@ -43,8 +44,9 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
-            LoadConfigVariables();
+            permission.RegisterPermission(permUse, this);
             AddCovalenceCommand("mf", "cmdMarkFrame");
+            LoadConfigVariables();
         }
 
         private void OnPhotoCaptured(PhotoEntity photo, Item item, BasePlayer player, byte[] numArray)
@@ -89,18 +91,21 @@ namespace Oxide.Plugins
         [Command("mf")]
         private void cmdMarkFrame(IPlayer iplayer, string command, string[] args)
         {
-            BasePlayer player = iplayer.Object as BasePlayer;
-            PhotoFrame frame = FindEntity(player) as PhotoFrame;
-            if (frame != null)
+            if (!configData.RequirePermission || (configData.RequirePermission && permission.UserHasPermission(iplayer?.Id, permUse)))
             {
-                if (frames.ContainsKey(player.userID))
+                BasePlayer player = iplayer.Object as BasePlayer;
+                PhotoFrame frame = FindEntity(player) as PhotoFrame;
+                if (frame != null)
                 {
-                    frames.Remove(player.userID);
-                    iplayer.Reply("Frame has been unmarked");
-                    return;
+                    if (frames.ContainsKey(player.userID))
+                    {
+                        frames.Remove(player.userID);
+                        iplayer.Reply("Frame has been unmarked");
+                        return;
+                    }
+                    frames.Add(player.userID, frame.NetworkID);
+                    iplayer.Reply("Frame has been marked");
                 }
-                frames.Add(player.userID, frame.NetworkID);
-                iplayer.Reply("Frame has been marked");
             }
         }
 
@@ -116,6 +121,7 @@ namespace Oxide.Plugins
             public bool lockOnPaint;
             public bool leaveOpen;
             public bool debug;
+            public bool RequirePermission;
             public VersionNumber Version;
         }
 
