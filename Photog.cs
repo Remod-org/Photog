@@ -25,13 +25,21 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Photog", "RFC1920", "0.0.1")]
+    [Info("Photog", "RFC1920", "0.0.2")]
     [Description("Paste photo from Instant Camera to a PhotoFrame")]
     internal class Photog : RustPlugin
     {
         private ConfigData configData;
 
         private Dictionary<ulong, NetworkableId> frames = new Dictionary<ulong, NetworkableId>();
+
+        private void DoLog(string message)
+        {
+            if (configData.debug)
+            {
+                Interface.GetMod().LogInfo($"{Name}: {message}");
+            }
+        }
 
         private void OnServerInitialized()
         {
@@ -41,14 +49,14 @@ namespace Oxide.Plugins
 
         private void OnPhotoCaptured(PhotoEntity photo, Item item, BasePlayer player, byte[] numArray)
         {
-            Puts($"{player.displayName} took a photo {item.name}");
+            DoLog($"{player.displayName} took a photo {item.name}");
             if (frames.ContainsKey(player.userID))
             {
-                Puts("Try to copy photo");
+                DoLog("Try to copy photo");
                 BaseNetworkable frame = BaseNetworkable.serverEntities.Find(frames[player.userID]);
                 if (frame is PhotoFrame)
                 {
-                    Puts("Found a photo frame");
+                    DoLog("Found a photo frame");
                     PhotoFrame photoFrame = (PhotoFrame)frame;
                     BaseNetworkable.LoadInfo info = new BaseNetworkable.LoadInfo()
                     {
@@ -63,7 +71,7 @@ namespace Oxide.Plugins
                             }
                         }
                     };
-                    Puts("Loading image to photo frame");
+                    DoLog("Loading image to photo frame");
                     photoFrame.Load(info);
                     photoFrame.SendNetworkUpdateImmediate();
                     if (configData.lockOnPaint)
@@ -107,6 +115,7 @@ namespace Oxide.Plugins
         {
             public bool lockOnPaint;
             public bool leaveOpen;
+            public bool debug;
             public VersionNumber Version;
         }
 
@@ -125,7 +134,7 @@ namespace Oxide.Plugins
 
         protected override void LoadDefaultConfig()
         {
-            Puts("Creating new config file.");
+            DoLog("Creating new config file.");
             ConfigData config = new ConfigData
             {
                 leaveOpen = false,

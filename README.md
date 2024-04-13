@@ -15,10 +15,11 @@ Can be done from anywhere on the map.  At this time, you can only target one fra
 {
   "lockOnPaint": false,
   "leaveOpen": false,
+  "debug": false,
   "Version": {
     "Major": 0,
     "Minor": 0,
-    "Patch": 1
+    "Patch": 2
   }
 }
 ```
