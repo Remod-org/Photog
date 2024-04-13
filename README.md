@@ -1,7 +1,7 @@
 # Photog
 Utilities for Rust photography
 
-Run the /mf command to mark a photoframe, then use your instant camera to take a picture and post that to the frame.
+Run the /mf command to mark a photoframe, then use your instant camera to take a picture and post that to the frame.  There is a slight delay but it should get pasted within 5-10 seconds.
 
 Can be done from anywhere on the map.  At this time, you can only target one frame at a time.
 
