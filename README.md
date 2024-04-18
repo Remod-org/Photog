@@ -27,9 +27,9 @@ Can be done from anywhere on the map.  At this time, you can only target one fra
   "RequirePermission": false,
   "overlayPhotographerName": true,
   "Version": {
-    "Major": 0,
+    "Major": 1,
     "Minor": 0,
-    "Patch": 4
+    "Patch": 1
   }
 }
 ```
