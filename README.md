@@ -7,6 +7,8 @@ Optionally, the name of the player who took the photo will be overlaid on the im
 
 ![](https://i.imgur.com/nI5k950.jpeg)
 
+![](https://i.imgur.com/g0IuPB1.jpeg)
+
 Can be done from anywhere on the map.  At this time, you can only target one frame at a time.
 
 ## Commands
