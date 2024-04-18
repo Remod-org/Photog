@@ -18,6 +18,7 @@
     Optionally you can also view the license at <http://www.gnu.org/licenses/>.
 */
 #endregion License Information (GPL v2)
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -29,7 +30,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Photog", "RFC1920", "1.0.1")]
+    [Info("Photog", "RFC1920", "1.0.2")]
     [Description("Paste photo from Instant Camera to a PhotoFrame")]
     internal class Photog : RustPlugin
     {
@@ -56,9 +57,15 @@ namespace Oxide.Plugins
         private void OnPhotoCaptured(PhotoEntity photo, Item item, BasePlayer player, byte[] numArray)
         {
             DoLog($"{player.displayName} took a photo {item.name}");
-            if (configData.overlayPhotographerName)
+            if (configData.overlayPhotographerName || configData.overlayTimestamp || configData.overlayPosition)
             {
-                numArray = OverlayText(numArray, player.displayName);
+                string text = null;
+
+                if (configData.overlayPhotographerName) text += $"{player.displayName} ";
+                if (configData.overlayTimestamp) text += DateTime.Now.ToString("dd MMM yyyy");
+                if (configData.overlayPosition) text += $" @ {player.transform.position}";
+
+                numArray = OverlayText(numArray, text);
             }
             if (frames.ContainsKey(player.userID))
             {
@@ -130,19 +137,20 @@ namespace Oxide.Plugins
             }
             DoLog($"IMG w{bmp.Width}/h{bmp.Height}");
             // Always 854x480
-            int sLeft = bmp.Width / 5 * 4;
+            int sLeft = bmp.Width / 6;// * 4;
             int sHeight = bmp.Height / 5 * 4;
-            DoLog($"Overlay text at {sHeight}/{sLeft} h 50 w 650");
+            DoLog($"Overlay text '{text}' at {sHeight}/{sLeft} h 50 w 650");
             RectangleF rectf = new RectangleF(sLeft, sHeight, 650, 50);
+            int fontsize = configData.overlayFontSize > 10 ? configData.overlayFontSize : 10;
             using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
             {
-                using (System.Drawing.Font arialFont = new System.Drawing.Font("Arial", 10))
+                using (System.Drawing.Font arialFont = new System.Drawing.Font("Arial", fontsize))
                 {
                     g.SmoothingMode = SmoothingMode.AntiAlias;
                     g.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     g.PixelOffsetMode = PixelOffsetMode.HighQuality;
                     g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
-                    g.DrawString(text, new System.Drawing.Font("courier sans", 20, System.Drawing.FontStyle.Bold), Brushes.White, rectf);
+                    g.DrawString(text, new System.Drawing.Font("courier sans", fontsize, System.Drawing.FontStyle.Bold), Brushes.White, rectf);
                 }
             }
             MemoryStream ms = new MemoryStream();
@@ -168,6 +176,9 @@ namespace Oxide.Plugins
             public bool lockOnPaint;
             public bool leaveOpen;
             public bool overlayPhotographerName;
+            public bool overlayTimestamp;
+            public bool overlayPosition;
+            public int overlayFontSize;
             public bool debug;
             public bool RequirePermission;
             public VersionNumber Version;
@@ -194,6 +205,7 @@ namespace Oxide.Plugins
                 lockOnPaint = false,
                 leaveOpen = false,
                 overlayPhotographerName = true,
+                overlayFontSize = 12,
                 debug = false,
                 RequirePermission = false
             };

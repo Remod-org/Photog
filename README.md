@@ -25,13 +25,16 @@ Can be done from anywhere on the map.  At this time, you can only target one fra
 {
   "lockOnPaint": false,
   "leaveOpen": false,
-  "debug": true,
-  "RequirePermission": false,
   "overlayPhotographerName": true,
+  "overlayTimestamp": false,
+  "overlayPosition": false,
+  "overlayFontSize": 12,
+  "debug": false,
+  "RequirePermission": false,
   "Version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 1
+    "Patch": 2
   }
 }
 ```
@@ -42,6 +45,11 @@ If leaveOpen is true, the frame will continue to be targeted by subsequent snaps
 
 If overlayPhotographerName is true, the Steam name of the photographer will be overlaid on the photo item and the frame.
 
+If overlayTimestamp is true, the date will be overlaid on the photo item and the frame.
+
+If overlayPosition is true, the position of the photographer will be overlaid on the photo item and the frame.
+
 ## TODO
   1. Provide more flexibility about how and when photos can be updated.
+  2. Allow for font color selection - maybe
 
