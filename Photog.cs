@@ -19,13 +19,17 @@
 */
 #endregion License Information (GPL v2)
 using System.Collections.Generic;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Text;
+using System.IO;
 using Oxide.Core;
 using Oxide.Core.Libraries.Covalence;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Photog", "RFC1920", "0.0.3")]
+    [Info("Photog", "RFC1920", "1.0.1")]
     [Description("Paste photo from Instant Camera to a PhotoFrame")]
     internal class Photog : RustPlugin
     {
@@ -52,9 +56,14 @@ namespace Oxide.Plugins
         private void OnPhotoCaptured(PhotoEntity photo, Item item, BasePlayer player, byte[] numArray)
         {
             DoLog($"{player.displayName} took a photo {item.name}");
+            if (configData.overlayPhotographerName)
+            {
+                numArray = OverlayText(numArray, player.displayName);
+            }
             if (frames.ContainsKey(player.userID))
             {
                 DoLog("Try to copy photo");
+                photo.SetImageData(player.userID, numArray); // This overwrites the photoItem in inventory
                 BaseNetworkable frame = BaseNetworkable.serverEntities.Find(frames[player.userID]);
                 if (frame is PhotoFrame)
                 {
@@ -109,6 +118,44 @@ namespace Oxide.Plugins
             }
         }
 
+        private byte[] OverlayText(byte[] numArray, string text)
+        {
+            // https://stackoverflow.com/questions/40041373/add-text-to-image-without-saving
+            DoLog("OverlayText");
+            Bitmap bmp;
+
+            using (MemoryStream m = new MemoryStream(numArray))
+            {
+                bmp = new Bitmap(m);
+            }
+            DoLog($"IMG w{bmp.Width}/h{bmp.Height}");
+            // Always 854x480
+            int sLeft = bmp.Width / 5 * 4;
+            int sHeight = bmp.Height / 5 * 4;
+            DoLog($"Overlay text at {sHeight}/{sLeft} h 50 w 650");
+            RectangleF rectf = new RectangleF(sLeft, sHeight, 650, 50);
+            using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
+            {
+                using (System.Drawing.Font arialFont = new System.Drawing.Font("Arial", 10))
+                {
+                    g.SmoothingMode = SmoothingMode.AntiAlias;
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    g.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+                    g.DrawString(text, new System.Drawing.Font("courier sans", 20, System.Drawing.FontStyle.Bold), Brushes.White, rectf);
+                }
+            }
+            MemoryStream ms = new MemoryStream();
+            bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+            byte[] arr = new byte[ms.Length];
+
+            ms.Position = 0;
+            ms.Read(arr, 0, (int)ms.Length);
+            ms.Close();
+
+            return arr;
+        }
+
         private static BaseEntity FindEntity(BasePlayer player)
         {
             RaycastHit hit;
@@ -120,6 +167,7 @@ namespace Oxide.Plugins
         {
             public bool lockOnPaint;
             public bool leaveOpen;
+            public bool overlayPhotographerName;
             public bool debug;
             public bool RequirePermission;
             public VersionNumber Version;
@@ -143,8 +191,11 @@ namespace Oxide.Plugins
             DoLog("Creating new config file.");
             ConfigData config = new ConfigData
             {
+                lockOnPaint = false,
                 leaveOpen = false,
-                lockOnPaint = false
+                overlayPhotographerName = true,
+                debug = false,
+                RequirePermission = false
             };
         }
     }
