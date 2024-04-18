@@ -3,11 +3,9 @@ Utilities for Rust photography
 
 Run the /mf command to mark a photoframe, then use your instant camera to take a picture and post that to the frame.  There is a slight delay but it should get pasted within 5-10 seconds.
 
-<<<<<<< HEAD
 Optionally, the name of the player who took the photo will be overlayed on the image.
-=======
+
 ![](https://i.imgur.com/nI5k950.jpeg)
->>>>>>> f0be5c39ea12f9f8757111dbd66c6f24fa7e86b3
 
 Can be done from anywhere on the map.  At this time, you can only target one frame at a time.
 
